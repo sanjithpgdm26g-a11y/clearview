@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ClearView — D2C Eyewear & Supply Chain</title>
+
+  <!-- ========== Performance-minded HEAD ========== -->
+  <meta http-equiv="Cache-Control" content="max-age=3600" />
+
+  <!-- Fonts/Icons (fast, cached) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Tailwind (deferred non-blocking) -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
+
+  <!-- Inline critical styles -->
+  <style>
+    :root{--brand-900:#0f172a;--brand-500:#0f766e;--brand-gold:#d4af37}
+    html,body{font-family:Montserrat,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; margin:0; background:#f8fafc; color:#0f172a;}
+    .font-serif{font-family:"Cormorant Garamond", serif;}
+    .hero-parallax{background-position:center;background-size:cover;background-attachment:scroll;will-change:transform;transform:translateZ(0);}
+    .glass-panel{background:rgba(255,255,255,0.94);backdrop-filter:blur(10px);border-bottom:1px solid #e6eef0;}
+    .drawer{position:fixed;top:0;right:-420px;width:420px;height:100vh;background:#fff;transition:right .28s ease;z-index:120;box-shadow:-12px 0 40px rgba(15,23,42,0.08)}
+    .drawer.open{right:0}
+    #loader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:white;z-index:9999}
+    img.lazy{opacity:0;transition:opacity .36s ease}
+    img.lazy.loaded{opacity:1}
+    .btn{background:var(--brand-500);color:white;padding:.6rem 1rem;border-radius:.5rem;font-weight:600}
+    .btn-ghost{background:transparent;border:1px solid #e6eef0;padding:.5rem .8rem;border-radius:.5rem}
+    .small{font-size:.85rem}
+    /* Responsive tweak for mobile drawers */
+    @media(max-width:480px){
+      .drawer{width:92vw}
+    }
+  </style>
+
+  <!-- Small SVG logo (used in header) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230f766e'/%3E%3Ctext x='50%25' y='55%25' fill='white' font-family='Cormorant Garamond, serif' font-size='22' text-anchor='middle'%3ECV%3C/text%3E%3C/svg%3E">
+</head>
+
+<body class="antialiased">
+
+  <!-- ========== LOADER (no forced delay) ========== -->
+  <div id="loader">
+    <div class="text-center">
+      <div class="text-3xl font-serif font-bold" style="color:var(--brand-900)">ClearView</div>
+      <div class="small mt-1 text-gray-500">Preparing your optimized experience…</div>
+    </div>
+  </div>
+
+  <!-- ========== APP ROOT ========== -->
+  <div id="app" class="hidden min-h-screen flex flex-col">
+
+    <!-- Top prompt (customer vs business) - shown on first visit or can be toggled -->
+    <div id="mode-prompt" class="fixed inset-0 z-60 flex items-center justify-center" style="background:rgba(15,23,42,0.45)">
+      <div class="bg-white rounded-xl p-8 max-w-xl text-center shadow-xl">
+        <h2 class="font-serif text-2xl font-bold mb-4">Welcome to ClearView</h2>
+        <p class="text-sm text-slate-600 mb-6">Choose how you'd like to enter: Customer (Shop) or Business (Supply Chain Manager).</p>
+        <div class="flex gap-4 justify-center">
+          <button id="enter-customer" class="btn">Customer View</button>
+          <button id="enter-business" class="btn-ghost">Business View</button>
+        </div>
+        <div class="text-xs text-slate-400 mt-4">You can switch later from the top bar.</div>
+      </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="fixed w-full top-0 z-50 glass-panel">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-20">
+          <div class="flex items-center gap-3 cursor-pointer" onclick="app.router('home')">
+            <!-- Logo -->
+            <div class="w-12 h-12 rounded-lg bg-[var(--brand-900)] flex items-center justify-center text-white">
+              <svg width="22" height="22" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="30" fill="#0f766e"/><text x="32" y="38" font-family="Cormorant Garamond" font-size="20" fill="#fff" text-anchor="middle">CV</text></svg>
+            </div>
+            <div>
+              <div class="font-serif text-xl font-bold leading-none">ClearView</div>
+              <div class="text-xs uppercase tracking-wider text-slate-500">Direct-to-Consumer</div>
+            </div>
+          </div>
+
+          <div class="hidden md:flex items-center gap-8">
+            <a class="cursor-pointer small" onclick="app.router('shop','Eyeglasses')">Eyeglasses</a>
+            <a class="cursor-pointer small" onclick="app.router('shop','Sunglasses')">Sunglasses</a>
+            <a class="cursor-pointer small" onclick="app.router('shop','Contacts')">Contacts</a>
+            <a class="cursor-pointer small" onclick="app.router('brand-story')">About</a>
+            <a class="cursor-pointer small" onclick="app.router('contact')">Contact</a>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button class="small" onclick="app.router('locate')">Locate Us</button>
+            <button class="small" onclick="app.router('support')">Support</button>
+            <button title="Track Order" class="small hidden md:inline-block" onclick="app.router('track-order')">Track</button>
+
+            <button id="cart-btn" class="relative" onclick="app.toggleCartDrawer();">
+              <i class="fa-solid fa-bag-shopping text-xl"></i>
+              <span id="cart-count" class="absolute -top-2 -right-2 bg-[var(--brand-500)] text-white text-xs w-5 h-5 flex items-center justify-center rounded-full opacity-0">0</span>
+            </button>
+
+            <button id="profile-btn" onclick="app.openProfileDrawer()">
+              <i class="fa-solid fa-user-circle text-2xl"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main id="main-view" class="pt-28 flex-1"></main>
+
+    <!-- FOOTER -->
+    <footer class="bg-[var(--brand-900)] text-white pt-10 pb-6 mt-10">
+      <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="font-serif text-2xl font-bold">ClearView</div>
+          <div class="text-sm text-white/80 mt-2">Premium eyewear with a transparent supply chain.</div>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Shop</div>
+          <div class="text-sm"><a onclick="app.router('shop','Eyeglasses')" class="cursor-pointer">Eyeglasses</a></div>
+          <div class="text-sm"><a onclick="app.router('shop','Sunglasses')" class="cursor-pointer">Sunglasses</a></div>
+          <div class="text-sm"><a onclick="app.router('shop','Contacts')" class="cursor-pointer">Contact Lenses</a></div>
+        </div>
+        <div>
+          <div class="font-semibold mb-2">Support</div>
+          <div class="text-sm"><a onclick="app.router('support')" class="cursor-pointer">Customer Support</a></div>
+          <div class="text-sm"><a onclick="app.router('contact')" class="cursor-pointer">Contact Us</a></div>
+          <div class="text-sm">© 2025 ClearView</div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================= DRAWERS / MODALS (single instances) ========================= -->
+
+  <!-- Cart Drawer -->
+  <div id="cart-drawer" class="drawer" aria-hidden="true">
+    <div class="p-4 border-b drawer-header flex justify-between items-center">
+      <div class="font-bold text-lg">Your Cart</div>
+      <button onclick="app.closeCartDrawer()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="cart-items" class="p-4 overflow-y-auto" style="height:calc(100vh - 220px)"></div>
+    <div class="drawer-footer p-4 border-t">
+      <div class="flex justify-between items-center mb-3">
+        <div class="text-sm">Subtotal</div>
+        <div id="cart-subtotal" class="font-bold">₹0</div>
+      </div>
+      <button class="w-full btn mb-2" onclick="app.router('cart'); app.closeCartDrawer()">Manage Cart</button>
+      <button class="w-full btn-ghost" onclick="app.router('checkout'); app.closeCartDrawer()">Checkout</button>
+    </div>
+  </div>
+
+  <!-- Profile Drawer -->
+  <div id="profile-drawer" class="drawer" aria-hidden="true">
+    <div class="p-4 border-b drawer-header flex justify-between items-center">
+      <div class="font-bold text-lg">Account</div>
+      <button onclick="app.closeProfileDrawer()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="profile-container" class="p-4 overflow-y-auto" style="height:calc(100vh - 120px)"></div>
+  </div>
+
+  <!-- Appointment Modal -->
+  <div id="appointment-modal" class="fixed inset-0 hidden items-center justify-center z-60" style="background:rgba(15,23,42,0.45)">
+    <div class="bg-white rounded-xl p-6 w-full max-w-lg">
+      <div class="flex justify-between items-center mb-4">
+        <div class="font-bold text-lg">Book Eye Test</div>
+        <button onclick="app.closeAppointment();"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="appointment-form">
+        <div class="grid grid-cols-1 gap-2">
+          <input id="appt-name" class="border px-3 py-2 rounded" placeholder="Full name" required />
+          <input id="appt-phone" class="border px-3 py-2 rounded" placeholder="Phone" required />
+          <input id="appt-email" class="border px-3 py-2 rounded" placeholder="Email (optional)" />
+          <input id="appt-date" type="date" class="border px-3 py-2 rounded" required />
+          <select id="appt-center" class="border px-3 py-2 rounded">
+            <option>ClearView - Chennai</option>
+            <option>ClearView - Bangalore</option>
+            <option>ClearView - Hyderabad</option>
+            <option>ClearView - Mumbai</option>
+            <option>ClearView - Coimbatore</option>
+          </select>
+          <textarea id="appt-notes" class="border px-3 py-2 rounded" placeholder="Notes (optional)"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 mt-4">
+          <button type="button" onclick="app.closeAppointment()" class="btn-ghost">Cancel</button>
+          <button type="submit" class="btn">Book Appointment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Order Confirmation Modal -->
+  <div id="order-confirm-modal" class="fixed inset-0 hidden items-center justify-center z-60" style="background:rgba(15,23,42,0.45)">
+    <div class="bg-white rounded-xl p-6 w-full max-w-md">
+      <div class="font-bold text-2xl mb-3">Order Confirmed</div>
+      <div id="order-confirm-body" class="text-sm text-slate-600 mb-4"></div>
+      <div class="flex justify-end">
+        <button class="btn" onclick="document.getElementById('order-confirm-modal').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= CORE DATA & ASSETS ========================= -->
+
+  <script>
+    /* ==========================
+       IMAGE ASSETS — use existing names where possible
+       Replace/augment with your local images if desired
+       ========================== */
+    window.IMAGE_ASSETS = {
+      eyeglasses: [
+        'angus-gray-bSjqyqukCjY-unsplash.jpg',
+        'jocelyn-morales-Mv7kokwzIMw-unsplash.jpg',
+        'charlesdeluvio-1-nx1QR5dTE-unsplash.jpg',
+        'kiran-ck-lSl94SZHRgA-unsplash.jpg'
+      ],
+      sunglasses: [
+        'ivan-cruz-tBMraRmwV_Q-unsplash.jpg',
+        'sebastian-coman-travel-dtOTQYmTEs0-unsplash.jpg',
+        'kiran-ck-lSl94SZHRgA-unsplash.jpg'
+      ],
+      contacts: [
+        'download (1).jpeg',
+        'download (2).jpeg',
+        'download.jpeg'
+      ]
+    };
+  </script>
+
+  <!-- ========================= DATABASE & GENERATOR ========================= -->
+  <script>
+    /* Lightweight product generator: 70 per category (210 total) */
+    (function () {
+      const categories = ['Eyeglasses', 'Sunglasses', 'Contacts'];
+      const materials = ['Acetate','Titanium','Gold-Plated','TR90','Bio-Plastic'];
+      const products = [];
+      categories.forEach(cat => {
+        for(let i=1;i<=70;i++){
+          const imgs = IMAGE_ASSETS[(cat.toLowerCase())] || ['https://via.placeholder.com/400'];
+          const img = imgs[(i-1) % imgs.length];
+          products.push({
+            id: `${cat.substring(0,3).toUpperCase()}-${1000+i}`,
+            name: `ClearView ${cat === 'Contacts' ? 'AquaLens' : 'Series'} ${String.fromCharCode(65 + (i%26))}-${i}`,
+            category: cat,
+            price: Math.round((cat==='Eyeglasses' ? 1499 + i*50 : cat==='Sunglasses' ? 1999 + i*70 : 699 + i*20)),
+            rating: (Math.random()*(5-3.5)+3.5).toFixed(1),
+            image: img,
+            stock: Math.floor(Math.random()*500),
+            material: materials[i % materials.length],
+            supplier: i % 2 === 0 ? 'Alpha Textiles' : 'XYZ Packaging'
+          });
+        }
+      });
+
+      window.DATABASE = {
+        products,
+        cart: [],
+        suppliers: [
+          { name: 'Alpha Textiles', loc: 'Delhi, India', type: 'Raw Material (Acetate)', rating: '8/10', strategy: 'Cost-plus', risk: 'Medium' },
+          { name: 'XYZ Packaging', loc: 'Mumbai, India', type: 'Packaging', rating: '7/10', strategy: 'Competitive', risk: 'Low' },
+          { name: 'OptiGlass Tech', loc: 'Shenzhen, China', type: 'Lens Manufacturing', rating: '9/10', strategy: 'Volume Discount', risk: 'High' },
+          { name: 'LogiFast 3PL', loc: 'Bangalore, Hub', type: 'Distribution', rating: '8.5/10', strategy: 'Fixed Contract', risk: 'Low' }
+        ],
+        orders: [],
+        appointments: [],
+        users: {},
+        currentProfile: null,
+        feedbacks: []
+      };
+
+      // restore minimal persisted state
+      try {
+        const saved = JSON.parse(localStorage.getItem('clearview_v3') || '{}');
+        if (saved.cart) DATABASE.cart = saved.cart;
+        if (saved.orders) DATABASE.orders = saved.orders;
+        if (saved.currentProfile) DATABASE.currentProfile = saved.currentProfile;
+        if (saved.feedbacks) DATABASE.feedbacks = saved.feedbacks;
+      } catch(e) { console.warn('restore error', e); }
+    })();
+  </script>
+
+  <!-- ========================= UTIL: Lazy images + batching + helpers ========================= -->
+  <script>
+    // lazy image loader using IntersectionObserver
+    function initLazyImages(root=document){
+      const imgs = root.querySelectorAll('img.lazy');
+      if (!('IntersectionObserver' in window)){
+        // fallback: load immediately
+        imgs.forEach(img => { img.src = img.dataset.src; img.classList.add('loaded'); });
+        return;
+      }
+      const io = new IntersectionObserver((entries, obs) => {
+        entries.forEach(e => {
+          if (e.isIntersecting){
+            const img = e.target;
+            img.src = img.dataset.src;
+            img.onload = ()=> img.classList.add('loaded');
+            obs.unobserve(img);
+          }
+        });
+      }, { rootMargin: '100px' });
+      imgs.forEach(i => io.observe(i));
+    }
+
+    // minimal currency formatter
+    function cur(v){ return '₹' + Number(v).toLocaleString('en-IN'); }
+
+    // small debounce
+    function debounce(fn, t=100){ let to; return (...a)=>{ clearTimeout(to); to=setTimeout(()=>fn(...a),t); }; }
+  </script>
+
+  <!-- ========================= VIEWS (Home, Shop, Cart, Checkout, Profile, About, Contact, Locate, Support, SCM, Track, Order Confirm) ========================= -->
+  <script>
+    // Batch size for product initial render
+    const BATCH_SIZE = 24;
+
+    // small helper to build product card HTML (lazy images)
+    function productCardHTML(p){
+      return `
+        <div class="product-card group bg-white rounded-xl overflow-hidden border hover:shadow-md transition">
+          <div class="relative h-64 bg-slate-50 overflow-hidden">
+            <img class="lazy w-full h-full object-cover" data-src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/400?text=ClearView'">
+            <div class="absolute top-3 left-3 bg-[var(--brand-900)] text-white text-xs px-2 py-1 rounded">New</div>
+            <div class="absolute inset-x-0 bottom-0 p-3 flex gap-2 justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition">
+              <button class="bg-white text-[var(--brand-900)] w-10 h-10 rounded-full flex items-center justify-center" onclick="app.addToCart('${p.id}')"><i class="fa-solid fa-cart-plus"></i></button>
+              <button class="bg-white text-[var(--brand-900)] w-10 h-10 rounded-full flex items-center justify-center" onclick="app.quickView('${p.id}')"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="p-4">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <div class="text-xs text-slate-400 uppercase">${p.category}</div>
+                <div class="font-serif font-bold text-lg">${p.name}</div>
+              </div>
+              <div class="text-yellow-400 small"><i class="fa-solid fa-star"></i> ${p.rating}</div>
+            </div>
+            <div class="flex justify-between items-center mt-3">
+              <div class="font-bold">${cur(p.price)}</div>
+              <div class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">Stock: ${p.stock}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // VIEWS object (returns HTML string for each view)
+    const views = {
+      home: function(){
+        // homepage with offers, banners, featured products (first batch)
+        const featured = DATABASE.products.slice(0,6).map(p => `<div class="w-44"><img data-src="${p.image}" class="lazy rounded-md" alt="${p.name}"/></div>`).join('');
+        return `
+          <section class="relative h-[70vh] hero-parallax" style="background-image:url('${IMAGE_ASSETS.eyeglasses[0]}')">
+            <div class="absolute inset-0 bg-[var(--brand-900)]/55"></div>
+            <div class="relative max-w-7xl mx-auto px-4 h-full flex items-center">
+              <div class="max-w-2xl text-white">
+                <div class="text-sm uppercase tracking-widest text-[var(--brand-gold)] mb-2">Limited Time Offer</div>
+                <h1 class="font-serif text-5xl md:text-6xl font-bold leading-tight mb-3">Vision, Reimagined</h1>
+                <p class="mb-6 text-slate-200">Premium eyewear, virtual try-on, and a supply chain you can trust. Shop our limited-time sale now.</p>
+                <div class="flex gap-3">
+                  <button class="btn" onclick="app.router('shop','Eyeglasses')">Shop Eyeglasses</button>
+                  <button class="btn-ghost" onclick="app.openAppointment()">Book Eye Test</button>
+                </div>
+              </div>
+              <div class="ml-12 hidden md:block">
+                <div class="bg-white/10 p-4 rounded-lg backdrop-blur">
+                  <div class="font-semibold text-white mb-2">Featured</div>
+                  <div class="flex gap-3 overflow-hidden">${featured}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="font-serif text-2xl font-bold">Offers & Sales</h2>
+                <div class="text-sm text-slate-500">Up to 40% off on selected frames</div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-6 border rounded-lg">
+                  <div class="font-semibold mb-2">Festive Sale</div>
+                  <div class="text-sm text-slate-600">Buy 1, get 25% off on second pair. Free shipping.</div>
+                </div>
+                <div class="p-6 border rounded-lg">
+                  <div class="font-semibold mb-2">Student Discount</div>
+                  <div class="text-sm text-slate-600">Extra 10% with valid student ID.</div>
+                </div>
+                <div class="p-6 border rounded-lg">
+                  <div class="font-semibold mb-2">Clearance</div>
+                  <div class="text-sm text-slate-600">Last pieces at up to 60% off.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        `;
+      },
+
+      shop: function(category){
+        // container HTML; actual product DOM inserted in batches by script after returning this HTML
+        const items = category ? DATABASE.products.filter(p => p.category === category) : DATABASE.products;
+        return `
+          <div class="bg-white min-h-screen pb-20">
+            <div class="bg-[var(--brand-900)] text-white py-14 text-center relative overflow-hidden">
+              <div class="max-w-7xl mx-auto px-4">
+                <h1 class="font-serif text-4xl font-bold">${category || 'All Products'}</h1>
+                <div class="text-sm text-[var(--brand-gold)] mt-1">${items.length} styles</div>
+              </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 mt-8 flex gap-8">
+              <aside class="w-64 hidden md:block">
+                <div class="sticky top-28">
+                  <div class="mb-4 font-semibold">Categories</div>
+                  <ul class="text-sm space-y-2">
+                    <li><a class="cursor-pointer" onclick="app.router('shop','Eyeglasses')">Eyeglasses</a></li>
+                    <li><a class="cursor-pointer" onclick="app.router('shop','Sunglasses')">Sunglasses</a></li>
+                    <li><a class="cursor-pointer" onclick="app.router('shop','Contacts')">Contacts</a></li>
+                  </ul>
+                </div>
+              </aside>
+
+              <div class="flex-1">
+                <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                <div id="load-more-holder" class="mt-6 text-center"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      cart: function(){
+        const items = DATABASE.cart;
+        const subtotal = items.reduce((s,i)=>s + (i.price * (i.qty || 1)), 0);
+        const gst = Math.round(subtotal * 0.18);
+        const total = subtotal + gst;
+        return `
+          <div class="max-w-6xl mx-auto py-12 px-4">
+            <h2 class="font-serif text-2xl font-bold mb-6">Manage Cart</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="md:col-span-2 bg-white p-6 rounded border">
+                ${items.length ? items.map(it=>`
+                  <div class="flex items-center gap-4 mb-4">
+                    <img src="${it.image}" onerror="this.src='https://via.placeholder.com/80'" class="w-20 h-20 object-cover rounded"/>
+                    <div class="flex-1">
+                      <div class="font-semibold">${it.name}</div>
+                      <div class="text-xs text-slate-500">${it.id}</div>
+                      <div class="mt-2 flex items-center gap-2">
+                        <button class="px-3 py-1 border rounded" onclick="app.updateQty('${it.id}', ${Math.max((it.qty||1)-1,1)})">-</button>
+                        <div>${it.qty || 1}</div>
+                        <button class="px-3 py-1 border rounded" onclick="app.updateQty('${it.id}', ${(it.qty||1)+1})">+</button>
+                        <button class="ml-4 text-sm text-red-600" onclick="app.removeFromCart('${it.id}')">Remove</button>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-bold">${cur(it.price)}</div>
+                    </div>
+                  </div>
+                `).join('') : '<div class="text-center py-12 text-slate-500">Your cart is empty.</div>'}
+              </div>
+
+              <aside class="bg-white p-6 rounded border">
+                <h3 class="font-semibold mb-3">Order Summary</h3>
+                <div class="flex justify-between"><div>Subtotal</div><div>${cur(subtotal)}</div></div>
+                <div class="flex justify-between"><div>GST (18%)</div><div>${cur(gst)}</div></div>
+                <div class="flex justify-between font-bold mt-3"><div>Total</div><div>${cur(total)}</div></div>
+                <div class="mt-4">
+                  <button class="btn w-full" onclick="app.router('checkout')">Proceed to Checkout</button>
+                </div>
+              </aside>
+            </div>
+          </div>
+        `;
+      },
+
+      checkout: function(){
+        const subtotal = DATABASE.cart.reduce((s,i)=>s + (i.price * (i.qty || 1)),0);
+        const gst = Math.round(subtotal * 0.18);
+        const total = subtotal + gst;
+        return `
+          <div class="max-w-4xl mx-auto py-12 px-4">
+            <h2 class="font-serif text-2xl font-bold mb-6">Checkout</h2>
+            <div class="bg-white p-6 rounded border">
+              <div class="mb-4">
+                <h4 class="font-semibold">Delivery</h4>
+                ${DATABASE.currentProfile ? `<div class="text-sm">${DATABASE.currentProfile.name} — ${DATABASE.currentProfile.email || ''}</div>` : `<div class="text-sm text-slate-500">Sign in to autofill details or continue as guest</div>`}
+                <div class="mt-3">
+                  <input id="checkout-name" class="border px-3 py-2 rounded w-full mb-2" placeholder="Full name" value="${DATABASE.currentProfile ? (DATABASE.currentProfile.name || '') : ''}"/>
+                  <input id="checkout-phone" class="border px-3 py-2 rounded w-full mb-2" placeholder="Phone"/>
+                  <textarea id="checkout-address" class="border px-3 py-2 rounded w-full mb-2" placeholder="Delivery address"></textarea>
+                </div>
+              </div>
+
+              <h4 class="font-semibold mb-2">Payment</h4>
+              <div class="grid grid-cols-1 gap-4">
+                <div class="p-3 border rounded flex justify-between items-center">
+                  <div>
+                    <div class="font-semibold">Razorpay / UPI / Cards</div>
+                    <div class="small text-slate-500">Fast & secure</div>
+                  </div>
+                  <button id="pay-razorpay" class="btn">Pay ${cur(total)}</button>
+                </div>
+
+                <div class="p-3 border rounded flex justify-between items-center">
+                  <div>
+                    <div class="font-semibold">Stripe</div>
+                    <div class="small text-slate-500">Cards & Netbanking</div>
+                  </div>
+                  <button id="pay-stripe" class="btn-ghost">Pay ${cur(total)}</button>
+                </div>
+
+                <div class="p-3 border rounded flex justify-between items-center">
+                  <div>
+                    <div class="font-semibold">Cash on Delivery</div>
+                    <div class="small text-slate-500">Pay at delivery</div>
+                  </div>
+                  <button id="pay-cod" class="btn-ghost">Place COD</button>
+                </div>
+              </div>
+
+              <div class="mt-4 text-xs text-slate-500">By placing an order you agree to Terms & Privacy.</div>
+            </div>
+          </div>
+        `;
+      },
+
+      'brand-story': function(){
+        return `
+          <div class="max-w-4xl mx-auto py-12 px-4">
+            <h1 class="font-serif text-3xl font-bold mb-4">About ClearView</h1>
+            <div class="prose">
+              <p>ClearView is built to make quality eyewear accessible with transparent pricing and reliable delivery. We own our supply chain end-to-end to ensure quality and speed.</p>
+              <h3>Mission</h3>
+              <p>Provide vision with clarity, style with substance, operations with integrity.</p>
+              <h3>Team</h3>
+              <p>Our team includes designers, supply chain experts, optical technicians, and customer support professionals.</p>
+            </div>
+          </div>
+        `;
+      },
+
+      contact: function(){
+        return `
+          <div class="max-w-4xl mx-auto py-12 px-4">
+            <h1 class="font-serif text-3xl font-bold mb-4">Contact Us</h1>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <p class="text-sm text-slate-600 mb-4">For general inquiries, partnerships, or press.</p>
+                <div class="mb-3"><strong>Email</strong><div class="text-sm text-slate-500">hello@clearview.com</div></div>
+                <div class="mb-3"><strong>Phone</strong><div class="text-sm text-slate-500">1800-CLEAR-VW</div></div>
+              </div>
+              <div>
+                <form id="contact-form">
+                  <input id="contact-name" class="border px-3 py-2 rounded w-full mb-2" placeholder="Name" required />
+                  <input id="contact-email" class="border px-3 py-2 rounded w-full mb-2" placeholder="Email" required />
+                  <textarea id="contact-message" class="border px-3 py-2 rounded w-full mb-2" placeholder="Message" required></textarea>
+                  <div class="flex justify-end">
+                    <button class="btn" type="submit">Send</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      locate: function(){
+        // 25 branch list (example cities)
+        const branches = [
+          "Chennai - T Nagar","Chennai - Velachery","Chennai - Anna Nagar","Chennai - OMR",
+          "Bangalore - Indiranagar","Bangalore - Koramangala","Bangalore - Jayanagar","Bangalore - Whitefield",
+          "Mumbai - Bandra","Mumbai - Andheri","Mumbai - Churchgate","Mumbai - Powai",
+          "Hyderabad - Banjara Hills","Hyderabad - Gachibowli","Hyderabad - Kukatpally","Hyderabad - Hitech City",
+          "Coimbatore - RS Puram","Coimbatore - Gandhipuram","Pune - Koregaon Park","Pune - Kalyani Nagar",
+          "Delhi - Connaught Place","Delhi - Saket","Gurgaon - DLF Phase 1","Noida - Sector 18",
+          "Ahmedabad - CG Road"
+        ];
+        const list = branches.map((b,i)=>`<div class="p-3 border rounded">${i+1}. <strong>${b}</strong><div class="text-xs text-slate-500">View on map</div></div>`).join('');
+        return `
+          <div class="max-w-6xl mx-auto py-12 px-4">
+            <h1 class="font-serif text-3xl font-bold mb-4">Locate Us</h1>
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="md:col-span-2 bg-white p-6 rounded border">
+                <div class="h-60 bg-slate-100 rounded flex items-center justify-center text-slate-400">Map view placeholder (Embed Google Maps in production)</div>
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                  ${list}
+                </div>
+              </div>
+              <aside class="bg-white p-6 rounded border">
+                <h4 class="font-semibold mb-2">Find a branch near you</h4>
+                <input id="locate-query" class="border px-3 py-2 rounded w-full mb-2" placeholder="City or branch name"/>
+                <button class="btn w-full" onclick="(function(){ const q = document.getElementById('locate-query').value.trim(); if(!q) return alert('Enter search'); alert('Search simulated: '+q); })()">Search</button>
+              </aside>
+            </div>
+          </div>
+        `;
+      },
+
+      support: function(){
+        return `
+          <div class="max-w-4xl mx-auto py-12 px-4">
+            <h1 class="font-serif text-3xl font-bold mb-4">Customer Support</h1>
+            <div class="bg-white p-6 rounded border">
+              <p class="mb-4">Need help with orders, returns, or eye tests? Reach us using the channels below.</p>
+              <div class="mb-3"><strong>Phone:</strong> 1800-CLEAR-VW</div>
+              <div class="mb-3"><strong>Email:</strong> support@clearview.com</div>
+              <div class="mb-3"><strong>Feedback</strong></div>
+              <form id="feedback-form">
+                <input id="fb-name" class="border px-3 py-2 rounded w-full mb-2" placeholder="Name"/>
+                <input id="fb-email" class="border px-3 py-2 rounded w-full mb-2" placeholder="Email"/>
+                <textarea id="fb-message" class="border px-3 py-2 rounded w-full mb-2" placeholder="Your feedback"></textarea>
+                <div class="flex justify-end"><button class="btn" type="submit">Submit</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+      },
+
+      'scm-dashboard': function(){
+        // Business view: show inventory, procurement, logistics summary and chart placeholder (Chart.js loaded lazily)
+        const inventoryCount = DATABASE.products.length;
+        return `
+          <div class="bg-slate-50 min-h-screen py-12 px-4">
+            <div class="max-w-7xl mx-auto">
+              <div class="flex justify-between items-center mb-8">
+                <h1 class="font-serif text-3xl font-bold">Supply Chain Control Tower</h1>
+                <div>
+                  <button class="btn-ghost" onclick="app.exportInventory()">Export CSV</button>
+                </div>
+              </div>
+
+              <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-6 rounded border">
+                  <div class="text-sm text-slate-500">Active SKUs</div>
+                  <div class="text-2xl font-bold">${inventoryCount}</div>
+                </div>
+                <div class="bg-white p-6 rounded border">
+                  <div class="text-sm text-slate-500">Order Fill Rate</div>
+                  <div class="text-2xl font-bold">98.5%</div>
+                </div>
+                <div class="bg-white p-6 rounded border">
+                  <div class="text-sm text-slate-500">Avg Lead Time</div>
+                  <div class="text-2xl font-bold">5 days</div>
+                </div>
+              </div>
+
+              <div class="bg-white p-6 rounded border">
+                <h3 class="font-semibold mb-3">Cost Breakdown</h3>
+                <div class="md:flex gap-6">
+                  <div class="w-full md:w-1/3">
+                    <canvas id="scmCostChart" width="300" height="220"></canvas>
+                  </div>
+                  <div class="flex-1">
+                    <ul class="text-sm space-y-2">
+                      <li>Procurement — 35%</li>
+                      <li>Manufacturing — 25%</li>
+                      <li>Distribution — 20%</li>
+                      <li>Warehousing — 10%</li>
+                      <li>Tech — 10%</li>
+                    </ul>
+                    <div class="mt-4">
+                      <h4 class="font-semibold">Suppliers</h4>
+                      ${DATABASE.suppliers.map(s => `<div class="border p-2 rounded mt-2"><div class="font-semibold">${s.name}</div><div class="text-xs">${s.loc} • ${s.type}</div></div>`).join('')}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      },
+
+      'track-order': function(){
+        return `
+          <div class="max-w-4xl mx-auto py-12 px-4">
+            <h1 class="font-serif text-3xl font-bold mb-4">Track Your Order</h1>
+            <div class="bg-white p-6 rounded border">
+              <div class="flex gap-3">
+                <input id="track-input" class="border px-3 py-2 rounded flex-1" placeholder="ORD-123456" />
+                <button class="btn" onclick="(function(){ const id = document.getElementById('track-input').value.trim(); if(!id) return alert('Enter ID'); const ord = app.routerTrack(id); if(!ord) return alert('Order not found'); app.showOrder(ord); })()">Track</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    // helper to render a view and then run any post-render tasks
+    function renderView(name, param){
+      const main = document.getElementById('main-view');
+      if (!main) return;
+      main.innerHTML = views[name](param);
+      // after DOM injection tasks:
+      // 1) lazy images
+      initLazyImages(main);
+      // 2) if shop view, start batch rendering
+      if (name === 'shop') {
+        const grid = document.getElementById('product-grid');
+        const items = param ? DATABASE.products.filter(p => p.category === param) : DATABASE.products;
+        let idx = 0;
+        function loadNextBatch(){
+          const slice = items.slice(idx, idx + BATCH_SIZE);
+          if (!slice.length) { document.getElementById('load-more-holder').innerHTML = '<div class="text-sm text-slate-500">All products loaded</div>'; return; }
+          const html = slice.map(productCardHTML).join('');
+          grid.insertAdjacentHTML('beforeend', html);
+          initLazyImages(grid);
+          idx += BATCH_SIZE;
+          // if still items, show load more button (in case infinite scroll blocked)
+          if (idx < items.length) {
+            document.getElementById('load-more-holder').innerHTML = '<button id="load-more-btn" class="btn">Load more</button>';
+            document.getElementById('load-more-btn').onclick = () => loadNextBatch();
+          } else {
+            document.getElementById('load-more-holder').innerHTML = '<div class="text-sm text-slate-500">All products loaded</div>';
+          }
+        }
+        // initial batch
+        loadNextBatch();
+        // also auto-load more on scroll near bottom
+        window.onscroll = function(){
+          if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 700)) {
+            // only if load-more button exists
+            const btn = document.getElementById('load-more-btn');
+            if (btn) btn.click();
+          }
+        };
+      }
+
+      // scm chart init lazy
+      if (name === 'scm-dashboard') {
+        // lazy load Chart.js if not present
+        if (typeof Chart === 'undefined') {
+          const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/chart.js'; s.defer = true;
+          s.onload = () => initScmChart();
+          document.body.appendChild(s);
+        } else initScmChart();
+      }
+    }
+
+    function initScmChart(){
+      const ctx = document.getElementById('scmCostChart');
+      if (!ctx) return;
+      if (ctx._cv) return;
+      ctx._cv = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels:['Procurement','Manufacturing','Warehousing','Distribution','Tech'],
+          datasets:[{ data:[35,25,10,20,10], backgroundColor:['#0f766e','#2dd4bf','#f59e0b','#1e293b','#94a3b8'] }]
+        }
+      });
+    }
+  </script>
+
+  <!-- ========================= APP CONTROLLER (cart, profile, checkout, appointment, analytics management) ========================= -->
+  <script>
+    // Basic persistence and helpers
+    function persistAll(){
+      try {
+        const toSave = {
+          cart: DATABASE.cart,
+          orders: DATABASE.orders,
+          currentProfile: DATABASE.currentProfile,
+          feedbacks: DATABASE.feedbacks
+        };
+        localStorage.setItem('clearview_v3', JSON.stringify(toSave));
+      } catch(e){ console.warn(e); }
+    }
+
+    // Basic GA management UI & event wrapper
+    window.GA = {
+      id: localStorage.getItem('cv_ga_id') || '',
+      enabled: localStorage.getItem('cv_ga_enabled') === '1',
+      setId(id){
+        this.id = id; localStorage.setItem('cv_ga_id', id);
+      },
+      toggle(enabled){
+        this.enabled = enabled; localStorage.setItem('cv_ga_enabled', enabled ? '1' : '0');
+      },
+      send(event, payload){
+        if (!this.enabled || !this.id) return;
+        if (typeof gtag === 'function') {
+          gtag('event', event, payload);
+        } else {
+          // load GA script if not loaded
+          const m = this;
+          if (!document.querySelector('script[data-ga]')) {
+            const s = document.createElement('script');
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + this.id;
+            s.setAttribute('data-ga','1');
+            s.onload = function(){
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){ window.dataLayer.push(arguments); }
+              window.gtag = gtag;
+              gtag('js', new Date());
+              gtag('config', m.id, { send_page_view: false });
+              gtag('event', event, payload);
+            };
+            document.head.appendChild(s);
+          }
+        }
+      }
+    };
+
+    // App controller (exposed as global `app`)
+    window.app = {
+      // Router wrapper
+      router(name, param){
+        // track navigation
+        GA.send('page_view', { page_path: location.pathname + '#' + name, page_title: document.title });
+        renderView(name, param);
+      },
+
+      // Init app: hide loader, display app, mode prompt handling
+      init(){
+        // hide loader quickly
+        const loader = document.getElementById('loader');
+        if (loader) { loader.style.opacity = 0; setTimeout(()=> loader.remove(), 240); }
+        document.getElementById('app').classList.remove('hidden');
+
+// Always show mode prompt
+document.getElementById('mode-prompt').style.display = 'flex';
+
+
+        // wire mode prompt
+        document.getElementById('enter-customer').addEventListener('click', ()=>{
+          localStorage.setItem('cv_mode','customer');
+          document.getElementById('mode-prompt').style.display = 'none';
+          app.router('home');
+        });
+        document.getElementById('enter-business').addEventListener('click', ()=>{
+          localStorage.setItem('cv_mode','business');
+          document.getElementById('mode-prompt').style.display = 'none';
+          app.router('scm-dashboard');
+        });
+
+        // wire contact form
+        document.addEventListener('submit', function(e){
+          if (e.target && e.target.id === 'contact-form'){
+            e.preventDefault();
+            const name = document.getElementById('contact-name').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const msg = document.getElementById('contact-message').value.trim();
+            DATABASE.feedbacks.push({ id: 'FB-'+Date.now(), name, email, message: msg, createdAt: new Date().toISOString() });
+            persistAll();
+            alert('Thanks! We will reach out soon.');
+            app.router('home');
+            GA.send('feedback_submitted', {method:'contact_form'});
+          }
+          if (e.target && e.target.id === 'feedback-form') {
+            e.preventDefault();
+            const name = document.getElementById('fb-name').value.trim();
+            const email = document.getElementById('fb-email').value.trim();
+            const msg = document.getElementById('fb-message').value.trim();
+            DATABASE.feedbacks.push({ id: 'FB-'+Date.now(), name, email, message: msg, createdAt: new Date().toISOString() });
+            persistAll();
+            alert('Feedback received — thank you!');
+            app.router('support');
+            GA.send('feedback_submitted', {method:'support_form'});
+          }
+        }, false);
+
+        // appointment submit
+        document.getElementById('appointment-form').addEventListener('submit', function(e){
+          e.preventDefault();
+          const name = document.getElementById('appt-name').value.trim();
+          const phone = document.getElementById('appt-phone').value.trim();
+          const email = document.getElementById('appt-email').value.trim();
+          const date = document.getElementById('appt-date').value;
+          const center = document.getElementById('appt-center').value;
+          const notes = document.getElementById('appt-notes').value.trim();
+          if (!name || !phone || !date) return alert('Please fill required fields');
+          const appt = { id: 'APT-'+Date.now(), name, phone, email, date, center, notes, createdAt: new Date().toISOString() };
+          DATABASE.appointments.push(appt);
+          persistAll();
+          app.closeAppointment();
+          alert('Appointment booked: ' + appt.id + '\\n' + date + ' at ' + center);
+          GA.send('appointment_booked', {center, date});
+        });
+
+        // checkout payment buttons wired via delegation below
+        // initial cart badge
+        app.updateCartCount();
+      },
+
+      // CART / CART DRAWER
+      toggleCartDrawer(){
+        const drawer = document.getElementById('cart-drawer');
+        if (!drawer) return;
+        if (!drawer.classList.contains('open')) {
+          // open
+          drawer.classList.add('open');
+          app.renderCartMini();
+        } else {
+          // if already open, go to cart page
+          app.router('cart');
+          drawer.classList.remove('open');
+        }
+      },
+
+      openCartDrawer(){ document.getElementById('cart-drawer').classList.add('open'); app.renderCartMini(); },
+      closeCartDrawer(){ document.getElementById('cart-drawer').classList.remove('open'); },
+
+      renderCartMini(){
+        const body = document.getElementById('cart-items');
+        if (!body) return;
+        if (!DATABASE.cart.length) {
+          body.innerHTML = '<div class="text-center text-slate-500 py-10">Cart is empty.</div>';
+          app.updateCartCount(); app.updateCartSubtotal();
+          return;
+        }
+        const html = DATABASE.cart.map(i => `
+          <div class="flex items-center gap-3 p-2 border-b">
+            <img src="${i.image}" onerror="this.src='https://via.placeholder.com/80'" class="w-14 h-14 object-cover rounded"/>
+            <div class="flex-1">
+              <div class="font-semibold">${i.name}</div>
+              <div class="text-xs text-slate-500">${i.qty} × ${cur(i.price)}</div>
+            </div>
+            <div>
+              <button class="text-sm text-red-600" onclick="app.removeFromCart('${i.id}')">Remove</button>
+            </div>
+          </div>
+        `).join('');
+        body.innerHTML = html;
+        app.updateCartSubtotal();
+      },
+
+      addToCart(productId){
+        const prod = DATABASE.products.find(p => p.id === productId);
+        if (!prod) return alert('Product not found');
+        const existing = DATABASE.cart.find(i => i.id === productId);
+        if (existing) existing.qty += 1; else DATABASE.cart.push({ id:prod.id, name:prod.name, price:prod.price, qty:1, image:prod.image });
+        persistAll();
+        app.updateCartCount();
+        app.renderCartMini();
+        GA.send('add_to_cart', {product: prod.id, price: prod.price});
+      },
+
+      removeFromCart(productId){
+        DATABASE.cart = DATABASE.cart.filter(i => i.id !== productId);
+        persistAll();
+        app.updateCartCount();
+        app.renderCartMini();
+        if (app.currentView === 'cart') app.router('cart');
+      },
+
+      updateQty(productId, qty){
+        DATABASE.cart = DATABASE.cart.map(i => i.id === productId ? {...i, qty: qty<1?1:qty} : i);
+        persistAll();
+        app.updateCartCount();
+        if (app.currentView === 'cart') app.router('cart');
+      },
+
+      updateCartCount(){
+        const el = document.getElementById('cart-count');
+        if (!el) return;
+        const count = DATABASE.cart.reduce((s,i)=> s + (i.qty || 1), 0);
+        el.textContent = count;
+        el.style.opacity = count? '1':'0';
+      },
+
+      updateCartSubtotal(){
+        const subtotal = DATABASE.cart.reduce((s,i)=> s + (i.price * (i.qty || 1)), 0);
+        const el = document.getElementById('cart-subtotal');
+        if (el) el.textContent = cur(subtotal);
+      },
+
+      // QUICK VIEW (simple)
+      quickView(productId){
+        const prod = DATABASE.products.find(p=>p.id===productId);
+        if (!prod) return alert('Not found');
+        alert(`${prod.name}\nPrice: ${cur(prod.price)}\nMaterial: ${prod.material}\nSupplier: ${prod.supplier}`);
+      },
+
+      // PROFILE
+      openProfileDrawer(){
+        const drawer = document.getElementById('profile-drawer');
+        if (!drawer) return;
+        drawer.classList.add('open');
+        app.renderProfile();
+      },
+      closeProfileDrawer(){ document.getElementById('profile-drawer').classList.remove('open'); },
+
+      renderProfile(){
+        const container = document.getElementById('profile-container');
+        if (!container) return;
+        const p = DATABASE.currentProfile;
+        if (!p) {
+          container.innerHTML = `<div><p class="text-sm text-slate-500 mb-3">Sign in</p>
+            <input id="login-email" class="border px-3 py-2 rounded w-full mb-2" placeholder="Email"/>
+            <input id="login-name" class="border px-3 py-2 rounded w-full mb-2" placeholder="Full name"/>
+            <button class="btn w-full" onclick="app.loginFromDrawer()">Sign In</button></div>`;
+          return;
+        }
+        container.innerHTML = `<div>
+          <div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-full bg-[var(--brand-500)] text-white flex items-center justify-center font-bold">${(p.name||'U').charAt(0)}</div>
+          <div><div class="font-semibold">${p.name}</div><div class="text-xs text-slate-500">${p.email||''}</div></div></div>
+          <h4 class="font-semibold">Addresses</h4>
+          ${(p.addresses||[]).map(a=>`<div class="p-2 border rounded mb-2 text-sm">${a}</div>`).join('') || '<div class="text-xs text-slate-400 mb-2">No address</div>'}
+          <textarea id="new-address" class="border w-full px-2 py-1 rounded mb-2" placeholder="Add address"></textarea>
+          <button class="btn w-full" onclick="app.addAddress()">Add Address</button>
+          <div class="mt-4"><h4 class="font-semibold">Orders</h4>
+            ${(DATABASE.orders||[]).slice(0,5).map(o=>`<div class="border p-2 rounded mb-2"><div class="font-semibold">${o.id}</div><div class="text-xs">${o.status}</div></div>`).join('')||'<div class="text-xs text-slate-400">No orders</div>'}
+          </div>
+          <div class="mt-4"><button class="btn-ghost w-full" onclick="app.logout()">Logout</button></div>
+        </div>`;
+      },
+
+      loginFromDrawer(){
+        const email = (document.getElementById('login-email')?.value || '').trim().toLowerCase();
+        const name = (document.getElementById('login-name')?.value || '').trim();
+        if (!email || !name) return alert('Provide name and email');
+        DATABASE.users[email] = { email, name, addresses: [] };
+        DATABASE.currentProfile = DATABASE.users[email];
+        persistAll();
+        app.renderProfile();
+        GA.send('user_signin', {email});
+      },
+
+      addAddress(){
+        const a = (document.getElementById('new-address')?.value || '').trim();
+        if (!a) return alert('Add address');
+        if (!DATABASE.currentProfile) return alert('Please sign in');
+        DATABASE.currentProfile.addresses = DATABASE.currentProfile.addresses || [];
+        DATABASE.currentProfile.addresses.push(a);
+        DATABASE.users[DATABASE.currentProfile.email] = DATABASE.currentProfile;
+        persistAll();
+        app.renderProfile();
+      },
+
+      logout(){
+        DATABASE.currentProfile = null; persistAll(); app.renderProfile();
+      },
+
+      // Orders
+      routerTrack(orderId){ return DATABASE.orders.find(o => o.id === orderId) || null; },
+      showOrder(ord){
+        if (!ord) return alert('No order');
+        document.getElementById('order-confirm-body').innerHTML = `<div><strong>${ord.id}</strong><div class="text-xs text-slate-500">Status: ${ord.status}</div><div class="mt-2 text-sm">${ord.items.map(i=>i.name+' × '+i.qty).join('<br>')}</div></div>`;
+        document.getElementById('order-confirm-modal').classList.remove('hidden');
+      },
+
+      // Export inventory (simple CSV)
+      exportInventory(){
+        let csv = 'id,name,category,price,stock\\n';
+        DATABASE.products.forEach(p=> csv += `${p.id},"${p.name}",${p.category},${p.price},${p.stock}\\n`);
+        const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'inventory.csv'; a.click(); URL.revokeObjectURL(url);
+      },
+
+      // Payments: wire Razorpay/Stripe/COD
+      async handlePayRazorpay(){
+        if (!DATABASE.cart.length) return alert('Cart empty');
+        try {
+          const res = await fetch('/razorpay/create-order', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: DATABASE.cart, customer: DATABASE.currentProfile })});
+          const data = await res.json();
+          if (!data.orderId) return alert('Payment init failed');
+          if (typeof Razorpay === 'undefined') {
+            await new Promise((resolve,reject)=>{
+              const s=document.createElement('script'); s.src='https://checkout.razorpay.com/v1/checkout.js'; s.onload=resolve; s.onerror=reject; document.head.appendChild(s);
+            });
+          }
+          const options = {
+            key: data.keyId,
+            amount: data.amount,
+            currency: data.currency || 'INR',
+            order_id: data.orderId,
+            name: 'ClearView',
+            handler: function(resp){ app.confirmOrder('Razorpay', resp.razorpay_payment_id || resp.payment_id); },
+            theme: { color: '#0f172a' }
+          };
+          const rzp = new Razorpay(options); rzp.open();
+        } catch(e){ console.error(e); alert('Razorpay error'); }
+      },
+
+      async handlePayStripe(){
+        if (!DATABASE.cart.length) return alert('Cart empty');
+        try {
+          const res = await fetch('/stripe/create-session', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: DATABASE.cart })});
+          const data = await res.json();
+          if (data.url) window.location.href = data.url; else alert('Stripe error');
+        } catch(e){ console.error(e); alert('Stripe error'); }
+      },
+
+      handlePayCOD(){
+        if (!DATABASE.cart.length) return alert('Cart empty');
+        app.confirmOrder('COD', 'COD-'+Date.now());
+      },
+
+      confirmOrder(method, txn){
+        const order = {
+          id: 'ORD-' + Math.floor(Math.random()*900000 + 100000),
+          status: 'Placed',
+          items: JSON.parse(JSON.stringify(DATABASE.cart)),
+          paymentMethod: method,
+          paymentTxn: txn,
+          createdAt: new Date().toISOString(),
+          deliveryETA: new Date(Date.now() + 4*24*3600*1000).toISOString().split('T')[0],
+          tracking: [{status:'Placed', date: new Date().toISOString()}]
+        };
+        DATABASE.orders.push(order);
+        DATABASE.cart = [];
+        persistAll();
+        app.updateCartCount();
+        document.getElementById('order-confirm-body').innerHTML = `<div><strong>${order.id}</strong><div class="text-xs text-slate-500">Payment: ${order.paymentMethod}</div><div class="mt-2">Estimated Delivery: ${order.deliveryETA}</div></div>`;
+        document.getElementById('order-confirm-modal').classList.remove('hidden');
+        GA.send('order_placed', {orderId: order.id, method});
+      },
+
+      // Appointment modal controls
+      openAppointment(){ document.getElementById('appointment-modal').classList.remove('hidden'); },
+      closeAppointment(){ document.getElementById('appointment-modal').classList.add('hidden'); },
+
+      // Utilities
+      showFeedbacks(){ console.log('Feedbacks', DATABASE.feedbacks); },
+
+      // current view track
+      get currentView(){ return (document.getElementById('main-view')?.dataset?.view) || ''; }
+    };
+
+    // Delegated click handlers for payments in checkout after DOM injection
+    document.addEventListener('click', function(e){
+      const t = e.target;
+      if (t && (t.id === 'pay-razorpay' || t.closest && t.closest('#pay-razorpay'))) { e.preventDefault(); app.handlePayRazorpay(); }
+      if (t && (t.id === 'pay-stripe' || t.closest && t.closest('#pay-stripe'))) { e.preventDefault(); app.handlePayStripe(); }
+      if (t && (t.id === 'pay-cod' || t.closest && t.closest('#pay-cod'))) { e.preventDefault(); app.handlePayCOD(); }
+    }, true);
+
+    // Expose small debug helper
+    window._cv = { DB: DATABASE, GA };
+
+    // Start app when DOM ready
+    document.addEventListener('DOMContentLoaded', function(){
+      app.init();
+      // default route if mode set
+      if (localStorage.getItem('cv_mode')) {
+        if (localStorage.getItem('cv_mode') === 'business') app.router('scm-dashboard'); else app.router('home');
+      }
+      // wire checkout buttons inside dynamic content (later)
+    });
+  </script>
+
+  <!-- ========================= FINAL SMALL PERFORMANCE LAYER ========================= -->
+  <script>
+    // Preload hero and some images when idle
+    if ('requestIdleCallback' in window) requestIdleCallback(()=> {
+      (DATABASE.products || []).slice(0,12).forEach(p=>{ const i = new Image(); i.src = p.image; });
+    }, {timeout:2000});
+  </script>
+
+</body>
+</html>
